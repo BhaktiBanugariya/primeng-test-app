@@ -1,0 +1,8 @@
+.pointer{
+    cursor: pointer;
+}
+
+.detail-button {
+    float: left;
+    padding-right: 5px;
+}

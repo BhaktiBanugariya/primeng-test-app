@@ -1,0 +1,118 @@
+<p-table #ptable [columns]="cols" [value]="data" dataKey="{{gridOptions.dataKey}}" [paginator]="gridOptions.pagination"
+    rows="4" [rowsPerPageOptions]="[20, 50, 100]" [scrollable]="true" [globalFilterFields]="globalfilterColumns"
+    selectionMode="single" (onRowSelect)="onRowClick($event)">
+    <ng-template pTemplate="caption">
+        <div style="text-align: right">
+            <i class="fa fa-search" style="margin:4px 4px 0 0"></i>
+            <input type="text" pInputText size="50" placeholder="Global Filter" (input)="ptable.filterGlobal($event.target.value, 'contains')"
+                style="width:auto">
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header" let-columns>
+        <tr>
+            <th [attr.rowspan]="1">Personal Details</th>
+            <th [attr.colspan]="3">ADL Details</th>
+        </tr>
+        <tr>
+            <th *ngFor="let column of gridOptions.columnDefs" class="{{column.cellClass}}" [attr.rowspan]="column.children ? 1 : 3"
+                [attr.colspan]="getColspan(column)" [hidden]="column.hide" [pSortableColumn]="column.field" [ngStyle]="{ 'min-width' : column.width+'px', 'max-width' : column.width+'px' }"
+                [pSortableColumnDisabled]="!(gridOptions.sortable && !column.children && !column.suppressSort)" title="{{gridOptions.sortable && !column.children && !column.suppressSort? 'Click to sort':''}}">
+
+                <div class="table-label th-two-line">
+                    <span [innerHTML]="column.headerName"></span>
+                    <p-sortIcon *ngIf="gridOptions.sortable && !column.children && !column.suppressSort" [field]="column.field"></p-sortIcon>
+                </div>
+            </th>
+        </tr>
+        <tr>
+            <ng-template *ngFor="let column of columns">
+                <th *ngIf="column.child" class="{{column.child.cellClass}}" title="{{gridOptions.sortable && !column.child.children && !column.child.suppressSort? 'Click to sort':''}}"
+                    (click)="gridOptions.onSortChanged(column.child)" [attr.rowspan]="column.child.children ? 1 : 2"
+                    [attr.colspan]="column.child.children ? column.child.children.length : 1" [pSortableColumn]="column.child.field"
+                    [pSortableColumnDisabled]="!(gridOptions.sortable && !column.child.children && !column.child.suppressSort)">
+
+                    <span [innerHTML]="column.child.headerName"></span>
+                    <p-sortIcon *ngIf="gridOptions.sortable && !column.child.children && !column.child.suppressSort"
+                        [field]="column.child.field"></p-sortIcon>
+                </th>
+            </ng-template>
+        </tr>
+        <!-- ng-init="subChildColumns = column.child.children" -->
+        <tr>
+            <ng-template *ngFor="let column of subChildColumns">
+                <th *ngIf="column.subChild" class="{{column.subChild.cellClass}}" title="{{gridOptions.sortable && !column.subChild.suppressSort? 'Click to sort':''}}"
+                    (click)="gridOptions.onSortChanged(column.subChild)" [pSortableColumn]="column.subChild.field"
+                    [pSortableColumnDisabled]="!(gridOptions.sortable && !column.subChild.suppressSort)">
+
+                    <span [innerHTML]="column.subChild.headerName"></span>
+                    <p-sortIcon *ngIf="gridOptions.sortable && !column.subChild.suppressSort" [field]="column.subChild.field"></p-sortIcon>
+                </th>
+            </ng-template>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-rowData let-rowIndex="rowIndex" let-expanded="expanded" let-columns="columns">
+        <tr [pSelectableRow]="rowData">
+            <td *ngFor="let column of columns" [hidden]="column.hide" [ngClass]="{'sorted':(gridOptions.sortType == column.field) && $parent.$index != gridOptions.selectedRow}">
+                <div class="{{column.cellClass}}" [ngClass]="{'no-wrap': column.suppressWordWrap}" title="{{(gridOptions.RowTitleEnabled && rowData.RowTitle) || ''}}">
+                    <!-- <span [pRowToggler] [ngClass]="{'detail-button': column.columnTemplate}" *ngIf="gridOptions.allowRowGrouping && rowData.HasChildRows">
+                        <i [ngClass]="{'fa fa-plus-square-o':!rowData.ShowDetail,'fa fa-minus-square-o':rowData.ShowDetail}"
+                            class="cursor" (click)="!gridOptions.rowClickEnabled && rowClick(rowData,$index)"></i>
+                    </span> -->
+                    <span [ngClass]="{'detail-button': column.columnTemplate}" *ngIf="column.hasChildren && gridOptions.allowRowGrouping && rowData.HasChildRows">
+                        <a href="#" [pRowToggler]="rowData">
+                            <i [ngClass]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+                        </a>
+                    </span>
+                    <div (click)="$event.stopPropagation()" *ngIf="column.columnTemplate">
+                        <div *ngIf="column.columnTemplate === 'testTemplate'">
+                            <app-custom-button [resident]="rowData.Resident"></app-custom-button>
+                        </div>
+                    </div>
+                    <span class="cursor" *ngIf="gridOptions.allowDrillDown && column.cellClick && !column.columnTemplate">
+                        <a (click)="column.cellClick(rowData, rowIndex)" class="reports_plussign_resident">
+                            <span [innerHTML]="column.valueGetter? column.valueGetter(rowData) : rowData[column.field]"></span>
+                        </a>
+                    </span>
+                    <span *ngIf="!(gridOptions.allowDrillDown && column.cellClick) && !column.columnTemplate">
+                        <span [innerHTML]="column.valueGetter? column.valueGetter(rowData) : rowData[column.field]"></span>
+                    </span>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="rowexpansion" let-rowData let-rowIndex="rowIndex" *ngIf="gridOptions.allowRowGrouping">
+        <tr>
+            <td [attr.colspan]="columns.length">
+                Child Row : <app-custom-button [resident]="rowData.Resident"></app-custom-button>
+            </td>
+        </tr>
+        <tr class="child-row" [ngClass]="(!rowData.ShowDetail) ? 'noprint' : ''" *ngFor="let childRow of rowData.ChildRows"
+            [hidden]="rowData.ShowDetail && data.length > 0">
+
+            <td *ngIf="childRow['isFullWidth']" [attr.colspan]="columns.length">
+                <div [ngClass]="columnDefs[0].childClass">
+                    <div>
+                        <span [innerHTML]="childRow[columnDefs[0].field]"></span>
+                    </div>
+                </div>
+            </td>
+
+            <td [hidden]="childRow['isFullWidth']" *ngFor="let column of columnDefs" [ngClass]="{'sorted': gridOptions.sortType == column.field}">
+                <div [ngClass]="column.childClass">
+                    <div *ngIf="!column.parentOnly">
+                        <span [innerHTML]="childRow[column.field]"></span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="footer" let-columns>
+        <tr ng-show="data.length > 0">
+            <td [attr.colspan]="columns.length">
+                Report footer Summary text here
+            </td>
+        </tr>
+    </ng-template>
+    <!-- <ng-template pTemplate="summary" let-rowData>          
+    </ng-template> -->
+</p-table>
