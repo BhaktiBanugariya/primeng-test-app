@@ -1,3 +1,6 @@
+# PrimeNG ptable demo app
+This project includes features of prime ng p-table.
+
 # PrimeNG Angular-CLI
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.
